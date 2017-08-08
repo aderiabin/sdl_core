@@ -132,6 +132,9 @@ bool ResourceAllocationManagerImpl::IsResourceFree(
 
 void ResourceAllocationManagerImpl::SetAccessMode(
     const hmi_apis::Common_RCAccessMode::eType access_mode) {
+  if (hmi_apis::Common_RCAccessMode::ASK_DRIVER != access_mode) {
+    rejected_resources_for_application_.clear();
+  }
   current_access_mode_ = access_mode;
 }
 
