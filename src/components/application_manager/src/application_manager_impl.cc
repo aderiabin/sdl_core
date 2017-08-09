@@ -2768,6 +2768,10 @@ void ApplicationManagerImpl::UnregisterApplication(
     MessageHelper::SendStopAudioPathThru(*this);
   }
 
+#ifdef SDL_REMOTE_CONTROL
+  plugin_manager_.OnUnregisterApplication(app_id);
+#endif
+
   MessageHelper::SendOnAppUnregNotificationToHMI(
       app_to_remove, is_unexpected_disconnect, *this);
   request_ctrl_.terminateAppRequests(app_id);

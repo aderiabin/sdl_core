@@ -66,6 +66,12 @@ class ResourceAllocationManager {
   virtual bool IsResourceFree(const std::string& module_type) const = 0;
 
   /**
+   * @brief OnUnregisterApplication handles application unregistering event
+   * @param app_id application id which was unregistered
+   */
+  virtual void OnUnregisterApplication(const uint32_t app_id) = 0;
+
+  /**
    * @brief AcquireResource forces acquiring resource by application
    * @param module_type resource to acquire
    * @param app_id application that acquire resource
@@ -98,7 +104,7 @@ class ResourceAllocationManager {
   virtual void SetAccessMode(
       const hmi_apis::Common_RCAccessMode::eType access_mode) = 0;
 
-  virtual ~ResourceAllocationManager() = 0;
+  virtual ~ResourceAllocationManager() {}
 };
 
 }  // namespace remote_control

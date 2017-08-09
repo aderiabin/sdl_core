@@ -144,6 +144,12 @@ class GenericModule {
   virtual void OnDeviceRemoved(
       const connection_handler::DeviceHandle& device) = 0;
 
+  /**
+   * @brief OnUnregisterApplication handles application unregistering event
+   * @param app_id application id which was unregistered
+   */
+  virtual void OnUnregisterApplication(const uint32_t app_id) = 0;
+
  protected:
   explicit GenericModule(ModuleID module_id);
   void NotifyObservers(ModuleObserver::Errors error);

@@ -104,6 +104,13 @@ class PluginManager : public ModuleObserver {
    * @param device removed
    */
   void OnDeviceRemoved(const connection_handler::DeviceHandle& device);
+
+  /**
+   * @brief OnUnregisterApplication handles application unregistering event
+   * @param app_id application id which was unregistered
+   */
+  void OnUnregisterApplication(const uint32_t app_id);
+
   Modules& plugins();
 
  private:
