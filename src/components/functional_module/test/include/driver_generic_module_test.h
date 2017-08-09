@@ -68,6 +68,8 @@ class DriverGenericModuleTest : public GenericModule {
   }
 
   void OnDeviceRemoved(const connection_handler::DeviceHandle&) {}
+
+  void OnUnregisterApplication(const uint32_t app_id) {}
 };
 
 }  // namespace functional_modules

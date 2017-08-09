@@ -215,15 +215,43 @@ TEST_F(
 }
 
 TEST_F(RAManagerTest,
-       AcquireResource_ModuleTypeIsRejectedForApp_ExpectModuleRejected) {
+       AcquireResource_AcquiredModuleIsRejectedForApp2_ExpectApp2Rejected) {
   // Arrange
+  ResourceAllocationManagerImpl ra_manager(mock_module_);
   EXPECT_CALL(*mock_service_, GetApplication(kAppId1))
       .WillOnce(Return(mock_app_1_));
+  EXPECT_EQ(AcquireResult::ALLOWED,
+            ra_manager.AcquireResource(kModuleType1, kAppId1));
+
+  // Act
+  ra_manager.OnDriverDisallowed(kModuleType1, kAppId2);
+
+  // Assert
+  EXPECT_CALL(*mock_service_, GetApplication(kAppId2))
+      .WillOnce(Return(mock_app_2_));
+  EXPECT_EQ(AcquireResult::REJECTED,
+            ra_manager.AcquireResource(kModuleType1, kAppId2));
+}
+
+TEST_F(RAManagerTest,
+       AcquireResource_App1OccupiedResourceAndDisconnected_ExpectApp2Allowed) {
+  // Arrange
   ResourceAllocationManagerImpl ra_manager(mock_module_);
-  ra_manager.OnDriverDisallowed(kModuleType1, kAppId1);
-  const AcquireResult::eType expected_result = AcquireResult::REJECTED;
-  // Action & expectation
-  EXPECT_EQ(expected_result, ra_manager.AcquireResource(kModuleType1, kAppId1));
+  ra_manager.SetAccessMode(hmi_apis::Common_RCAccessMode::eType::AUTO_DENY);
+
+  EXPECT_CALL(*mock_service_, GetApplication(kAppId1))
+      .WillOnce(Return(mock_app_1_));
+  EXPECT_EQ(remote_control::AcquireResult::ALLOWED,
+            ra_manager.AcquireResource(kModuleType1, kAppId1));
+
+  // Act
+  ra_manager.OnUnregisterApplication(kAppId1);
+
+  // Assert
+  EXPECT_CALL(*mock_service_, GetApplication(kAppId2))
+      .WillOnce(Return(mock_app_2_));
+  EXPECT_EQ(remote_control::AcquireResult::ALLOWED,
+            ra_manager.AcquireResource(kModuleType1, kAppId2));
 }
 
 TEST_F(RAManagerTest, AskDriver_ExpectDriverConsentRequestSentToHMI) {
