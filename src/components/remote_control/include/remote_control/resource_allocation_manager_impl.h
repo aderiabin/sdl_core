@@ -74,6 +74,28 @@ class ResourceAllocationManagerImpl : public ResourceAllocationManager {
   hmi_apis::Common_RCAccessMode::eType current_access_mode_;
   AskDriverCallBackPtr active_call_back_;
   RemotePluginInterface& rc_plugin_;
+
+#ifdef BUILD_TESTS
+  FRIEND_TEST(RAManagerTest,
+              ForceAcquireResource_ExpectModuleIsAllocatedToAppId);
+  FRIEND_TEST(
+      RAManagerTest,
+      OnDriverDisallowed_ModuleIsAbsentInRejectedList_ModuleIsAddedToList);
+  FRIEND_TEST(
+      RAManagerTest,
+      OnDriverDisallowed_ModuleIsExistsInRejectedList_ModuleIsNotAddedToListAgain);
+  FRIEND_TEST(RAManagerTest,
+              OnUnregisterApplication_AppWithAllocatedRes_ResourceIsReleased);
+  FRIEND_TEST(
+      RAManagerTest,
+      OnUnregisterApplication_AppWithoutAllocatedRes_OtherResourceIsNotReleased);
+  FRIEND_TEST(
+      RAManagerTest,
+      OnUnregisterApplication_AppWithRejectedRes_ModuleIsNotExistsInList);
+  FRIEND_TEST(
+      RAManagerTest,
+      OnUnregisterApplication_AppWithoutRejectedRes_ModuleIsNotExistsInList);
+#endif  // BUILD_TESTS
 };
 }  // remote_control
 
