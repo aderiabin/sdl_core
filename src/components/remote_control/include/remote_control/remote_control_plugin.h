@@ -106,6 +106,12 @@ class RemoteControlPlugin : public RemotePluginInterface {
    */
   void OnDeviceRemoved(const connection_handler::DeviceHandle& device) OVERRIDE;
 
+  /**
+   * @brief OnUnregisterApplication handles application unregistering event
+   * @param app_id application id which was unregistered
+   */
+  void OnUnregisterApplication(const uint32_t app_id) OVERRIDE;
+
   void SendHmiStatusNotification(
       application_manager::ApplicationSharedPtr app) OVERRIDE;
 

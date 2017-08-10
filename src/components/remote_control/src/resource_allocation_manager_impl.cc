@@ -17,6 +17,8 @@ ResourceAllocationManagerImpl::ResourceAllocationManagerImpl(
     , active_call_back_()
     , rc_plugin_(rc_plugin) {}
 
+ResourceAllocationManagerImpl::~ResourceAllocationManagerImpl() {}
+
 AcquireResult::eType ResourceAllocationManagerImpl::AcquireResource(
     const std::string& module_type, const uint32_t app_id) {
   LOG4CXX_AUTO_TRACE(logger_);
@@ -25,13 +27,6 @@ AcquireResult::eType ResourceAllocationManagerImpl::AcquireResource(
   if (!acquiring_app) {
     LOG4CXX_WARN(logger_, "App with app_id: " << app_id << "does not exist!");
     return AcquireResult::IN_USE;
-  }
-
-  if (IsModuleTypeRejected(module_type, app_id)) {
-    LOG4CXX_DEBUG(logger_,
-                  "Driver disallowed app: " << app_id << " to acquire "
-                                            << module_type);
-    return AcquireResult::REJECTED;
   }
 
   const AllocatedResources::const_iterator allocated_it =
@@ -46,7 +41,17 @@ AcquireResult::eType ResourceAllocationManagerImpl::AcquireResource(
   }
 
   if (app_id == allocated_resources_[module_type]) {
+    LOG4CXX_DEBUG(logger_,
+                  "App: " << app_id << " is already acquired resource "
+                          << module_type);
     return AcquireResult::ALLOWED;
+  }
+
+  if (IsModuleTypeRejected(module_type, app_id)) {
+    LOG4CXX_DEBUG(logger_,
+                  "Driver disallowed app: " << app_id << " to acquire "
+                                            << module_type);
+    return AcquireResult::REJECTED;
   }
 
   const mobile_apis::HMILevel::eType acquiring_app_hmi_level =
@@ -162,8 +167,6 @@ void ResourceAllocationManagerImpl::AskDriver(const std::string& module_type,
   active_call_back_ = callback;
 }
 
-ResourceAllocationManagerImpl::~ResourceAllocationManagerImpl() {}
-
 void ResourceAllocationManagerImpl::ForceAcquireResource(
     const std::string& module_type, const uint32_t app_id) {
   LOG4CXX_DEBUG(logger_, "Force " << app_id << " acquiring " << module_type);
@@ -200,5 +203,24 @@ void ResourceAllocationManagerImpl::OnDriverDisallowed(
   list_of_rejected_resources.push_back(module_type);
 }
 
-ResourceAllocationManager::~ResourceAllocationManager() {}
+void ResourceAllocationManagerImpl::OnUnregisterApplication(
+    const uint32_t app_id) {
+  LOG4CXX_AUTO_TRACE(logger_);
+
+  rejected_resources_for_application_.erase(app_id);
+  for (AllocatedResources::const_iterator it = allocated_resources_.begin();
+       it != allocated_resources_.end();) {
+    if (app_id == it->second) {
+      LOG4CXX_INFO(logger_,
+                   "Application " << app_id
+                                  << " is unregistered. Releasing resource "
+                                  << it->first);
+      resources_state_.erase(it->first);
+      it = allocated_resources_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
 }  // namespace remote_control

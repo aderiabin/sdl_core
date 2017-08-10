@@ -12,6 +12,8 @@ class ResourceAllocationManagerImpl : public ResourceAllocationManager {
  public:
   ResourceAllocationManagerImpl(RemotePluginInterface& rc_plugin);
 
+  ~ResourceAllocationManagerImpl();
+
   AcquireResult::eType AcquireResource(const std::string& module_type,
                                        const uint32_t app_id) OVERRIDE FINAL;
 
@@ -27,7 +29,6 @@ class ResourceAllocationManagerImpl : public ResourceAllocationManager {
 
   void SetAccessMode(
       const hmi_apis::Common_RCAccessMode::eType access_mode) FINAL;
-  ~ResourceAllocationManagerImpl();
 
   void ForceAcquireResource(const std::string& module_type,
                             const uint32_t app_id) OVERRIDE FINAL;
@@ -35,7 +36,17 @@ class ResourceAllocationManagerImpl : public ResourceAllocationManager {
   void OnDriverDisallowed(const std::string& module_type,
                           const uint32_t app_id) OVERRIDE FINAL;
 
+  void OnUnregisterApplication(const uint32_t app_id) FINAL;
+
  private:
+  /**
+   * @brief IsModuleTypeRejected check if current resource was rejected by
+   * driver for current application
+   * @param module_type resource to check
+   * @param app_id application id
+   * @return true if current resource was rejected by driver for current
+   * application, otherwise - false
+   */
   bool IsModuleTypeRejected(const std::string& module_type,
                             const uint32_t app_id);
 

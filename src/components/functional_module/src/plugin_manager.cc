@@ -380,6 +380,24 @@ void PluginManager::OnDeviceRemoved(
   std::for_each(plugins_.begin(), plugins_.end(), HandleDeviceRemoved(device));
 }
 
+struct HandleApplicationUnregistered {
+ private:
+  const uint32_t app_id_;
+
+ public:
+  explicit HandleApplicationUnregistered(const uint32_t app_id)
+      : app_id_(app_id) {}
+  void operator()(PluginsValueType& x) {
+    x.second->OnUnregisterApplication(app_id_);
+  }
+};
+
+void PluginManager::OnUnregisterApplication(const uint32_t app_id) {
+  LOG4CXX_AUTO_TRACE(logger_);
+  std::for_each(
+      plugins_.begin(), plugins_.end(), HandleApplicationUnregistered(app_id));
+}
+
 PluginManager::Modules& PluginManager::plugins() {
   return plugins_;
 }

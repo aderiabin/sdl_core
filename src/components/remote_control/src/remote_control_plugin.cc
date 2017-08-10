@@ -352,6 +352,12 @@ void RemoteControlPlugin::OnDeviceRemoved(
     service()->ResetPrimaryDevice();
   }
 }
+
+void RemoteControlPlugin::OnUnregisterApplication(const uint32_t app_id) {
+  LOG4CXX_AUTO_TRACE(logger_);
+  resource_allocation_manager_.OnUnregisterApplication(app_id);
+}
+
 RCEventDispatcher& RemoteControlPlugin::event_dispatcher() {
   return event_dispatcher_;
 }
