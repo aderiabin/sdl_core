@@ -279,4 +279,122 @@ TEST_F(RAManagerTest, AskDriver_ExpectDriverConsentRequestSentToHMI) {
             message_to_hmi[json_keys::kMethod].asString());
 }
 
+TEST_F(RAManagerTest, ForceAcquireResource_ExpectModuleIsAllocatedToAppId) {
+  // Arrange
+  ResourceAllocationManagerImpl ra_manager(mock_module_);
+  // Act
+  ra_manager.ForceAcquireResource(kModuleType1, kAppId1);
+  // Assert
+  EXPECT_EQ(kAppId1, ra_manager.allocated_resources_[kModuleType1]);
+}
+
+TEST_F(RAManagerTest,
+       OnDriverDisallowed_ModuleIsAbsentInRejectedList_ModuleIsAddedToList) {
+  // Arrange
+  ResourceAllocationManagerImpl ra_manager(mock_module_);
+  // Act
+  ra_manager.OnDriverDisallowed(kModuleType1, kAppId1);
+  // Assert
+  std::vector<std::string> rejected_resources_list =
+      ra_manager.rejected_resources_for_application_[kAppId1];
+  uint32_t count = std::count(rejected_resources_list.begin(),
+                              rejected_resources_list.end(),
+                              kModuleType1);
+  EXPECT_EQ(1u, count);
+}
+
+TEST_F(
+    RAManagerTest,
+    OnDriverDisallowed_ModuleIsExistsInRejectedList_ModuleIsNotAddedToListAgain) {
+  // Arrange
+  ResourceAllocationManagerImpl ra_manager(mock_module_);
+  // Act
+  ra_manager.OnDriverDisallowed(kModuleType1, kAppId1);
+  ra_manager.OnDriverDisallowed(kModuleType1, kAppId1);
+  // Assert
+  std::vector<std::string> rejected_resources_list =
+      ra_manager.rejected_resources_for_application_[kAppId1];
+  uint32_t count = std::count(rejected_resources_list.begin(),
+                              rejected_resources_list.end(),
+                              kModuleType1);
+  EXPECT_EQ(1u, count);
+}
+
+TEST_F(RAManagerTest,
+       OnUnregisterApplication_AppWithAllocatedRes_ResourceIsReleased) {
+  // Arrange
+  ResourceAllocationManagerImpl ra_manager(mock_module_);
+  ra_manager.allocated_resources_[kModuleType1] = kAppId1;
+  ra_manager.allocated_resources_[kModuleType2] = kAppId2;
+  ra_manager.resources_state_[kModuleType1] = ResourceState::BUSY;
+  ra_manager.resources_state_[kModuleType2] = ResourceState::BUSY;
+  // Act
+  ra_manager.OnUnregisterApplication(kAppId1);
+  // Assert
+  ResourceAllocationManagerImpl::AllocatedResources::const_iterator cait =
+      ra_manager.allocated_resources_.find(kModuleType1);
+  EXPECT_EQ(ra_manager.allocated_resources_.end(), cait);
+  ResourceAllocationManagerImpl::AllocatedResources::const_iterator cait2 =
+      ra_manager.allocated_resources_.find(kModuleType2);
+  EXPECT_NE(ra_manager.allocated_resources_.end(), cait2);
+  EXPECT_EQ(kAppId2, cait2->second);
+  ResourceAllocationManagerImpl::ResourcesState::const_iterator csit =
+      ra_manager.resources_state_.find(kModuleType1);
+  EXPECT_EQ(ra_manager.resources_state_.end(), csit);
+  ResourceAllocationManagerImpl::ResourcesState::const_iterator csit2 =
+      ra_manager.resources_state_.find(kModuleType2);
+  EXPECT_NE(ra_manager.resources_state_.end(), csit2);
+  EXPECT_EQ(ResourceState::BUSY, csit2->second);
+}
+
+TEST_F(
+    RAManagerTest,
+    OnUnregisterApplication_AppWithoutAllocatedRes_OtherResourceIsNotReleased) {
+  // Arrange
+  ResourceAllocationManagerImpl ra_manager(mock_module_);
+  ra_manager.allocated_resources_[kModuleType2] = kAppId2;
+  ra_manager.resources_state_[kModuleType2] = ResourceState::FREE;
+  // Act
+  ra_manager.OnUnregisterApplication(kAppId1);
+  // Assert
+  ResourceAllocationManagerImpl::AllocatedResources::const_iterator cait =
+      ra_manager.allocated_resources_.find(kModuleType2);
+  EXPECT_NE(ra_manager.allocated_resources_.end(), cait);
+  EXPECT_EQ(kAppId2, cait->second);
+  ResourceAllocationManagerImpl::ResourcesState::const_iterator csit =
+      ra_manager.resources_state_.find(kModuleType2);
+  EXPECT_NE(ra_manager.resources_state_.end(), csit);
+  EXPECT_EQ(ResourceState::FREE, csit->second);
+}
+
+TEST_F(RAManagerTest,
+       OnUnregisterApplication_AppWithRejectedRes_ModuleIsNotExistsInList) {
+  // Arrange
+  ResourceAllocationManagerImpl ra_manager(mock_module_);
+  ra_manager.rejected_resources_for_application_[kAppId1] =
+      std::vector<std::string>();
+  std::vector<std::string>& rejected_res_list =
+      ra_manager.rejected_resources_for_application_[kAppId1];
+  rejected_res_list.push_back(kModuleType2);
+  rejected_res_list.push_back(kModuleType1);
+  // Act
+  ra_manager.OnUnregisterApplication(kAppId1);
+  // Assert
+  ResourceAllocationManagerImpl::RejectedResources::const_iterator cit =
+      ra_manager.rejected_resources_for_application_.find(kAppId1);
+  EXPECT_EQ(ra_manager.rejected_resources_for_application_.end(), cit);
+}
+
+TEST_F(RAManagerTest,
+       OnUnregisterApplication_AppWithoutRejectedRes_ModuleIsNotExistsInList) {
+  // Arrange
+  ResourceAllocationManagerImpl ra_manager(mock_module_);
+  // Act
+  ra_manager.OnUnregisterApplication(kAppId1);
+  // Assert
+  ResourceAllocationManagerImpl::RejectedResources::const_iterator cit =
+      ra_manager.rejected_resources_for_application_.find(kAppId1);
+  EXPECT_EQ(ra_manager.rejected_resources_for_application_.end(), cit);
+}
+
 }  // namespace remote_control
